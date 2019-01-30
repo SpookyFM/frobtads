@@ -44,7 +44,8 @@ Modified
 #define OS_FOREVER  ((ulong)-1)
 
 /* libcurl headers */
-#include <curl/curl.h>
+// @@FM - removed for emscripten compilation
+// #include <curl/curl.h>
 
 /* OS X spinlocks */
 #ifdef __APPLE__

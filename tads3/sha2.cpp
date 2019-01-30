@@ -111,11 +111,12 @@
 #  include <stdlib.h>
 #elif !defined(WIN32)
 #  include <stdlib.h>
-#  if !defined (_ENDIAN_H)
+// @@FM - Figure this one out - clang/emscripten doesn't like the include based on a define
+// #  if !defined (_ENDIAN_H)
 #    include <sys/param.h>
-#  else
-#    include _ENDIAN_H
-#  endif
+// #  else
+// #    include _ENDIAN_H
+// #  endif
 #endif
 
 /*  2. BYTE ORDER IN 32-BIT WORDS

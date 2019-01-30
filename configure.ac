@@ -87,11 +87,15 @@ CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
 # pdcurses (normally pdcurses is just curses on most systems, but it
 # doesn't hust to try pdcurses as a last resort.)
 #
-AC_SEARCH_LIBS([initscr], [ncurses curses pdcurses], [curseslibfound=true], [curseslibfound=false])
+# @@FM: Commenting this one out for now, will try to use an emscripten version of pdcurses
+# AC_SEARCH_LIBS([initscr], [ncurses curses pdcurses], [curseslibfound=true], [curseslibfound=false])
+curseslibfound=true
 
 # Check for libcurl (network client library for http et al).
 #
-AC_SEARCH_LIBS([curl_global_init], [curl], [curllibfound=true], [curllibfound=false])
+# @@FM: Commenting this one out for now, will figure out how to make this portable later on
+# AC_SEARCH_LIBS([curl_global_init], [curl], [curllibfound=true], [curllibfound=false])
+curllibfound=true
 
 
 #

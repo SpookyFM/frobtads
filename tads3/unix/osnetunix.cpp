@@ -23,7 +23,8 @@ Modified
 #include <time.h>
 #include <stdio.h>
 
-#include <curl/curl.h>
+// @@FM - removed for emscripten compilation
+// #include <curl/curl.h>
 
 #include "os.h"
 #include "t3std.h"
@@ -116,7 +117,8 @@ OS_Event *OSS_Watchdog::quit_evt = 0;
 void os_net_init(TadsNetConfig *config)
 {
     /* initialize the CURL (http client) library */
-    curl_global_init(0);
+    // @@FM - removed for emscripten compilation
+    // curl_global_init(0);
 
     /* set up the default thread attributes */
     pthread_attr_init(&G_thread_attr);
@@ -168,7 +170,8 @@ void os_net_cleanup()
                          thread_cnt.get(), spin_lock_cnt.get()));
 
     /* clean up the CURL library */
-    curl_global_cleanup();
+    // @@FM - removed for emscripten compilation
+    // curl_global_cleanup();
 
     /* delete our thread attributes */
     pthread_attr_destroy(&G_thread_attr);
@@ -783,287 +786,289 @@ int OS_HttpClient::request(int opts,
                            CVmDataSource *reply, char **headers,
                            char **location, const char *ua)
 {
-    char *url = 0;                                     /* full resource URL */
-    CURL *h = 0;                              /* libcurl transaction handle */
-    char *formbuf = 0;          /* application/x-www-form-urlencoded buffer */
-    size_t formlen = 0;                           /* length of formbuf data */
-    int ret = ErrOther;                                      /* result code */
-    curl_httppost *formhead = 0;          /* multipart form field list head */
-    curl_httppost *formtail = 0;          /* multipart form field list tail */
-    CVmMemorySource *hstream = 0;    /* memory stream for capturing headers */
-    curl_slist *hdr_slist = 0;    /* caller's headers, in curl slist format */
+    // @@FM - removed for emscripten compilation
+    return 0;
+//     char *url = 0;                                     /* full resource URL */
+//     CURL *h = 0;                              /* libcurl transaction handle */
+//     char *formbuf = 0;          /* application/x-www-form-urlencoded buffer */
+//     size_t formlen = 0;                           /* length of formbuf data */
+//     int ret = ErrOther;                                      /* result code */
+//     curl_httppost *formhead = 0;          /* multipart form field list head */
+//     curl_httppost *formtail = 0;          /* multipart form field list tail */
+//     CVmMemorySource *hstream = 0;    /* memory stream for capturing headers */
+//     curl_slist *hdr_slist = 0;    /* caller's headers, in curl slist format */
     
-    /* initially clear the location, if applicable */
-    if (location != 0)
-        *location = 0;
+//     /* initially clear the location, if applicable */
+//     if (location != 0)
+//         *location = 0;
 
-    /* presume no headers */
-    if (headers != 0)
-        *headers = 0;
+//     /* presume no headers */
+//     if (headers != 0)
+//         *headers = 0;
 
-    /* figure the scheme */
-    const char *scheme = ((opts & OptHTTPS) != 0 ? "https" : "http");
+//     /* figure the scheme */
+//     const char *scheme = ((opts & OptHTTPS) != 0 ? "https" : "http");
 
-    /* set up a handle for the communications */
-    h = curl_easy_init();
+//     /* set up a handle for the communications */
+//     h = curl_easy_init();
 
-    /* if that failed, return failure */
-    if (h == 0)
-    {
-        ret = ErrOther;
-        goto done;
-    }
+//     /* if that failed, return failure */
+//     if (h == 0)
+//     {
+//         ret = ErrOther;
+//         goto done;
+//     }
 
-    /* build the full URL */
-    url = t3sprintf_alloc("%s://%s:%d%s", scheme, host, portno, resource);
+//     /* build the full URL */
+//     url = t3sprintf_alloc("%s://%s:%d%s", scheme, host, portno, resource);
 
-    /* set up the connection to the resource */
-    curl_easy_setopt(h, CURLOPT_URL, url);
+//     /* set up the connection to the resource */
+//     curl_easy_setopt(h, CURLOPT_URL, url);
 
-    /* we don't want a progress meter or signals */
-    curl_easy_setopt(h, CURLOPT_NOPROGRESS, (long)1);
-    curl_easy_setopt(h, CURLOPT_NOSIGNAL, (long)1);
+//     /* we don't want a progress meter or signals */
+//     curl_easy_setopt(h, CURLOPT_NOPROGRESS, (long)1);
+//     curl_easy_setopt(h, CURLOPT_NOSIGNAL, (long)1);
 
-    /* set our write callback */
-    curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, http_get_recv);
-    curl_easy_setopt(h, CURLOPT_WRITEDATA, reply);
+//     /* set our write callback */
+//     curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, http_get_recv);
+//     curl_easy_setopt(h, CURLOPT_WRITEDATA, reply);
 
-    /* set our header write callback, if the caller wants the headers */
-    if (headers != 0)
-    {
-        hstream = new CVmMemorySource(1024);
-        curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, http_get_hdr);
-        curl_easy_setopt(h, CURLOPT_WRITEHEADER, hstream);
-    }
+//     /* set our header write callback, if the caller wants the headers */
+//     if (headers != 0)
+//     {
+//         hstream = new CVmMemorySource(1024);
+//         curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, http_get_hdr);
+//         curl_easy_setopt(h, CURLOPT_WRITEHEADER, hstream);
+//     }
 
-    /* if there's a user agent string, send it along */
-    if (ua != 0 && ua[0] != '\0')
-        curl_easy_setopt(h, CURLOPT_USERAGENT, ua);
+//     /* if there's a user agent string, send it along */
+//     if (ua != 0 && ua[0] != '\0')
+//         curl_easy_setopt(h, CURLOPT_USERAGENT, ua);
 
-    /* set the verb */
-    if (stricmp(verb, "GET") == 0)
-    {
-        /* this is the default verb - no libcurl option setting is needed */
-    }
-    else if (stricmp(verb, "POST") == 0 && payload != 0)
-    {
-        /* check for a multipart/formdata upload */
-        if (payload->count_items() == 1
-            && payload->get(0)->name[0] == '\0')
-        {
-            /* 
-             *   We have exactly one file-type item, and the item has an
-             *   empty name.  In this case, the caller has pre-encoded the
-             *   content body, so we don't want to apply any further POST
-             *   encoding; simply use the content exactly as given. 
-             */
+//     /* set the verb */
+//     if (stricmp(verb, "GET") == 0)
+//     {
+//         /* this is the default verb - no libcurl option setting is needed */
+//     }
+//     else if (stricmp(verb, "POST") == 0 && payload != 0)
+//     {
+//         /* check for a multipart/formdata upload */
+//         if (payload->count_items() == 1
+//             && payload->get(0)->name[0] == '\0')
+//         {
+//             /* 
+//              *   We have exactly one file-type item, and the item has an
+//              *   empty name.  In this case, the caller has pre-encoded the
+//              *   content body, so we don't want to apply any further POST
+//              *   encoding; simply use the content exactly as given. 
+//              */
 
-            /* get the file to send - this is the payload item's stream */
-            CVmDataSource *stream = payload->get(0)->stream;
+//             /* get the file to send - this is the payload item's stream */
+//             CVmDataSource *stream = payload->get(0)->stream;
 
-            /* set up the source data */
-            curl_easy_setopt(h, CURLOPT_READFUNCTION, http_get_send);
-            curl_easy_setopt(h, CURLOPT_READDATA, stream);
-            curl_easy_setopt(h, CURLOPT_INFILESIZE, stream->get_size());
-        }
-        else if (payload->is_multipart())
-        {
-            /* we have file attachments - build a curl_httppost list */
-            int cnt = payload->count_items();
-            for (int i = 0 ; i < cnt ; ++i)
-            {
-                /* get this item */
-                OS_HttpPayloadItem *item = payload->get(i);
+//             /* set up the source data */
+//             curl_easy_setopt(h, CURLOPT_READFUNCTION, http_get_send);
+//             curl_easy_setopt(h, CURLOPT_READDATA, stream);
+//             curl_easy_setopt(h, CURLOPT_INFILESIZE, stream->get_size());
+//         }
+//         else if (payload->is_multipart())
+//         {
+//             /* we have file attachments - build a curl_httppost list */
+//             int cnt = payload->count_items();
+//             for (int i = 0 ; i < cnt ; ++i)
+//             {
+//                 /* get this item */
+//                 OS_HttpPayloadItem *item = payload->get(i);
 
-                /* check the item type */
-                if (item->stream != 0)
-                {
-                    /* this is a file upload field */
-                    if (curl_formadd(
-                        &formhead, &formtail,
-                        CURLFORM_COPYNAME, item->name,
-                        CURLFORM_FILENAME, item->val,
-                        CURLFORM_CONTENTTYPE, item->mime_type,
-                        CURLFORM_CONTENTSLENGTH, item->stream->get_size(),
-                        CURLFORM_STREAM, item->stream,
-                        CURLFORM_END))
-                        goto done;
+//                 /* check the item type */
+//                 if (item->stream != 0)
+//                 {
+//                     /* this is a file upload field */
+//                     if (curl_formadd(
+//                         &formhead, &formtail,
+//                         CURLFORM_COPYNAME, item->name,
+//                         CURLFORM_FILENAME, item->val,
+//                         CURLFORM_CONTENTTYPE, item->mime_type,
+//                         CURLFORM_CONTENTSLENGTH, item->stream->get_size(),
+//                         CURLFORM_STREAM, item->stream,
+//                         CURLFORM_END))
+//                         goto done;
 
-                    /* make sure we've set the read callback */
-                    curl_easy_setopt(h, CURLOPT_READFUNCTION, http_get_send);
-                }
-                else
-                {
-                    /* this is a simple name/value pair */
-                    if (curl_formadd(&formhead, &formtail,
-                                     CURLFORM_COPYNAME, item->name,
-                                     CURLFORM_COPYCONTENTS, item->val,
-                                     CURLFORM_END))
-                        goto done;
-                }
-            }
+//                     /* make sure we've set the read callback */
+//                     curl_easy_setopt(h, CURLOPT_READFUNCTION, http_get_send);
+//                 }
+//                 else
+//                 {
+//                     /* this is a simple name/value pair */
+//                     if (curl_formadd(&formhead, &formtail,
+//                                      CURLFORM_COPYNAME, item->name,
+//                                      CURLFORM_COPYCONTENTS, item->val,
+//                                      CURLFORM_END))
+//                         goto done;
+//                 }
+//             }
 
-            /* set up the post with the field list */
-            curl_easy_setopt(h, CURLOPT_POST, (long)1);
-            curl_easy_setopt(h, CURLOPT_HTTPPOST, formhead);
-        }
-        else
-        {
-            /* it's a simple form - build the urlencoded form data */
-            formbuf = payload->urlencode(formlen);
+//             /* set up the post with the field list */
+//             curl_easy_setopt(h, CURLOPT_POST, (long)1);
+//             curl_easy_setopt(h, CURLOPT_HTTPPOST, formhead);
+//         }
+//         else
+//         {
+//             /* it's a simple form - build the urlencoded form data */
+//             formbuf = payload->urlencode(formlen);
 
-            /* set the form data */
-            curl_easy_setopt(h, CURLOPT_POST, (long)1);
-            curl_easy_setopt(h, CURLOPT_POSTFIELDS, formbuf);
-            curl_easy_setopt(h, CURLOPT_POSTFIELDSIZE, (long)formlen);
-        }
-    }
-    else if (stricmp(verb, "PUT") == 0
-             && payload != 0
-             && payload->count_items() == 1)
-    {
-        /* set the PUT verb */
-        curl_easy_setopt(h, CURLOPT_UPLOAD, (long)1);
+//             /* set the form data */
+//             curl_easy_setopt(h, CURLOPT_POST, (long)1);
+//             curl_easy_setopt(h, CURLOPT_POSTFIELDS, formbuf);
+//             curl_easy_setopt(h, CURLOPT_POSTFIELDSIZE, (long)formlen);
+//         }
+//     }
+//     else if (stricmp(verb, "PUT") == 0
+//              && payload != 0
+//              && payload->count_items() == 1)
+//     {
+//         /* set the PUT verb */
+//         curl_easy_setopt(h, CURLOPT_UPLOAD, (long)1);
 
-        /* get the file to send - this is the single payload item's stream */
-        CVmDataSource *stream = payload->get(0)->stream;
+//         /* get the file to send - this is the single payload item's stream */
+//         CVmDataSource *stream = payload->get(0)->stream;
 
-        /* set up the source data */
-        curl_easy_setopt(h, CURLOPT_READFUNCTION, http_get_send);
-        curl_easy_setopt(h, CURLOPT_READDATA, stream);
-        curl_easy_setopt(h, CURLOPT_INFILESIZE, (long)stream->get_size());
-    }
-    else 
-    {
-        /* it's not GET, POST, or PUT - we don't accept other verbs */
-        curl_easy_cleanup(h);
-        return ErrParams;
-    }
+//         /* set up the source data */
+//         curl_easy_setopt(h, CURLOPT_READFUNCTION, http_get_send);
+//         curl_easy_setopt(h, CURLOPT_READDATA, stream);
+//         curl_easy_setopt(h, CURLOPT_INFILESIZE, (long)stream->get_size());
+//     }
+//     else 
+//     {
+//         /* it's not GET, POST, or PUT - we don't accept other verbs */
+//         curl_easy_cleanup(h);
+//         return ErrParams;
+//     }
 
-    /* 
-     *   if a location parameter was provided, the caller wants to get any
-     *   redirect location returned, rather than following the redirect;
-     *   otherwise they want us to follow redirects 
-     */
-    curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, (long)(location == 0));
+//     /* 
+//      *   if a location parameter was provided, the caller wants to get any
+//      *   redirect location returned, rather than following the redirect;
+//      *   otherwise they want us to follow redirects 
+//      */
+//     curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, (long)(location == 0));
 
-    /* add the caller's custom headers, if provided */
-    if (send_headers != 0)
-    {
-        /* add each header to the list */
-        const char *p = send_headers;
-        size_t rem = send_headers_len;
-        while (rem != 0)
-        {
-            /* skip leading spaces */
-            for ( ; rem != 0 && *p != '\r' && *p != '\n' && is_space(*p) ;
-                 ++p, --rem) ;
+//     /* add the caller's custom headers, if provided */
+//     if (send_headers != 0)
+//     {
+//         /* add each header to the list */
+//         const char *p = send_headers;
+//         size_t rem = send_headers_len;
+//         while (rem != 0)
+//         {
+//             /* skip leading spaces */
+//             for ( ; rem != 0 && *p != '\r' && *p != '\n' && is_space(*p) ;
+//                  ++p, --rem) ;
 
-            /* scan to the CR-LF */
-            const char *h = p;
-            for ( ; rem != 0 && !(rem >= 2 && memcmp(p, "\r\n", 2) == 0) ;
-                 ++p, --rem) ;
+//             /* scan to the CR-LF */
+//             const char *h = p;
+//             for ( ; rem != 0 && !(rem >= 2 && memcmp(p, "\r\n", 2) == 0) ;
+//                  ++p, --rem) ;
 
-            /* if the line isn't empty, add the header */
-            if (p != h)
-            {
-                /* get a null-terminated copy of the header */
-                char *hn = lib_copy_str(h, p - h);
+//             /* if the line isn't empty, add the header */
+//             if (p != h)
+//             {
+//                 /* get a null-terminated copy of the header */
+//                 char *hn = lib_copy_str(h, p - h);
 
-                /* add the header */
-                hdr_slist = curl_slist_append(hdr_slist, hn);
+//                 /* add the header */
+//                 hdr_slist = curl_slist_append(hdr_slist, hn);
 
-                /* done with the copy of the string */
-                lib_free_str(hn);
-            }
+//                 /* done with the copy of the string */
+//                 lib_free_str(hn);
+//             }
 
-            /* skip the CR-LF */
-            if (rem >= 2)
-                p += 2, rem -= 2;
-        }
+//             /* skip the CR-LF */
+//             if (rem >= 2)
+//                 p += 2, rem -= 2;
+//         }
 
-        /* set the header list in curl */
-        curl_easy_setopt(h, CURLOPT_HTTPHEADER, hdr_slist);
-    }
+//         /* set the header list in curl */
+//         curl_easy_setopt(h, CURLOPT_HTTPHEADER, hdr_slist);
+//     }
 
-    /* 
-     *   To debug problems with CURL, enable the next two lines, which tell
-     *   CURL to call curl_debug() with detailed status information as it
-     *   goes through the curl_easy_perform() call.  The status information
-     *   can be very helpful in tracking down problems.  You can look at the
-     *   status calls to curl_debug() using gdb or by modifying curl_debug()
-     *   (see above) to write to a log file or the like.
-     */
-#ifdef OSNU_CURL_DEBUG
-    curl_easy_setopt(h, CURLOPT_VERBOSE, 1);
-    curl_easy_setopt(h, CURLOPT_DEBUGFUNCTION, curl_debug);
-#endif
+//     /* 
+//      *   To debug problems with CURL, enable the next two lines, which tell
+//      *   CURL to call curl_debug() with detailed status information as it
+//      *   goes through the curl_easy_perform() call.  The status information
+//      *   can be very helpful in tracking down problems.  You can look at the
+//      *   status calls to curl_debug() using gdb or by modifying curl_debug()
+//      *   (see above) to write to a log file or the like.
+//      */
+// #ifdef OSNU_CURL_DEBUG
+//     curl_easy_setopt(h, CURLOPT_VERBOSE, 1);
+//     curl_easy_setopt(h, CURLOPT_DEBUGFUNCTION, curl_debug);
+// #endif
 
-    /* do the transfer */
-    if (!curl_easy_perform(h))
-    {
-        /* get the HTTP response code */
-        long http_stat;
-        curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &http_stat);
+//     /* do the transfer */
+//     if (!curl_easy_perform(h))
+//     {
+//         /* get the HTTP response code */
+//         long http_stat;
+//         curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &http_stat);
 
-        /* the HTTP response code is the return value */
-        ret = (int)http_stat;
+//         /* the HTTP response code is the return value */
+//         ret = (int)http_stat;
 
-        /* if they wanted redirect data, and we got redirect data, return it */
-        if (location != 0 && http_stat == 301)
-        {
-            char *l = 0;
-            curl_easy_getinfo(h, CURLINFO_REDIRECT_URL, &l);
+//         /* if they wanted redirect data, and we got redirect data, return it */
+//         if (location != 0 && http_stat == 301)
+//         {
+//             char *l = 0;
+//             curl_easy_getinfo(h, CURLINFO_REDIRECT_URL, &l);
             
-            /* copy it back to the caller */
-            *location = lib_copy_str(l);
-        }
+//             /* copy it back to the caller */
+//             *location = lib_copy_str(l);
+//         }
 
-        /* if they wanted headers, return the headers */
-        if (headers != 0)
-        {
-            /* get the size of the headers */
-            size_t hlen = hstream->get_size();
+//         /* if they wanted headers, return the headers */
+//         if (headers != 0)
+//         {
+//             /* get the size of the headers */
+//             size_t hlen = hstream->get_size();
 
-            /* allocate space for a copy for the caller (with null byte) */
-            *headers = new char[hlen + 1];
+//             /* allocate space for a copy for the caller (with null byte) */
+//             *headers = new char[hlen + 1];
 
-            /* copy the headers into the new buffer */
-            hstream->seek(0, OSFSK_SET);
-            hstream->read(*headers, hlen);
+//             /* copy the headers into the new buffer */
+//             hstream->seek(0, OSFSK_SET);
+//             hstream->read(*headers, hlen);
 
-            /* add the null terminator */
-            (*headers)[hlen] = '\0';
-        }
-    }
+//             /* add the null terminator */
+//             (*headers)[hlen] = '\0';
+//         }
+//     }
 
-done:
-    /* close the handle */
-    if (h != 0)
-        curl_easy_cleanup(h);
+// done:
+//     /* close the handle */
+//     if (h != 0)
+//         curl_easy_cleanup(h);
 
-    /* delete the URL buffer */
-    if (url != 0)
-        lib_free_str(url);
+//     /* delete the URL buffer */
+//     if (url != 0)
+//         lib_free_str(url);
 
-    /* free the form data buffer */
-    if (formbuf != 0)
-        t3free(formbuf);
+//     /* free the form data buffer */
+//     if (formbuf != 0)
+//         t3free(formbuf);
 
-    /* delete the multipart form field list */
-    if (formhead != 0)
-        curl_formfree(formhead);
+//     /* delete the multipart form field list */
+//     if (formhead != 0)
+//         curl_formfree(formhead);
 
-    /* delete the header capture stream */
-    if (hstream != 0)
-        delete hstream;
+//     /* delete the header capture stream */
+//     if (hstream != 0)
+//         delete hstream;
 
-    /* free the header slist */
-    if (hdr_slist != 0)
-        curl_slist_free_all(hdr_slist);
+//     /* free the header slist */
+//     if (hdr_slist != 0)
+//         curl_slist_free_all(hdr_slist);
 
-    /* return the result code */
-    return ret;
+//     /* return the result code */
+//     return ret;
 }
 
 /* ------------------------------------------------------------------------ */
